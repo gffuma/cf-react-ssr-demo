@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "node dev.js",
-    "build": "echo 'Build lol'"
+    "build": "node build.js",
+    "preview": "wrangler dev dist/worker/index.js --local --compatibility-flags=streams_enable_constructors --compatibility-flag=transformstream_enable_standard_constructor"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^3.0.1",

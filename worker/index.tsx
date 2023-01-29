@@ -6,13 +6,18 @@ import { createHTMLStreamTransformer } from './streamUtils'
 
 const router = Router()
 
+// NOTE: Workaround to make vite define works ...
+// __ASSETS__ should treat as a simple global var but ok...
+const buildAssetsMap = __ASSETS__
+
 // TODO: Serve assets in prod...
 
 router.get('*', async (request: Request) => {
+  // TODO: Swtich 2 client render on exception....
   const transformer = createHTMLStreamTransformer([
     {
-      afterHeadOpen: () => __ASSETS__.head,
-      beforeBodyClose: () => __ASSETS__.endOfBody,
+      afterHeadOpen: () => buildAssetsMap.head,
+      beforeBodyClose: () => buildAssetsMap.endOfBody,
     },
   ])
   const reactStream = await renderToReadableStream(<Skeleton root={<App />} />)
