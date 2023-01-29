@@ -56,6 +56,32 @@ async function buildWorkerDev() {
   })
 }
 
+/**
+ * @param {import('rollup').RollupWatcher} w
+ * @returns {() => Promise<void>}
+ */
+function createCompilationWaiter(w) {
+  let isReady = true
+  w.on('event', (e) => {
+    if (e.code === 'START') isReady = false
+    if (e.code === 'END' || e.code === 'ERROR') isReady = true
+  })
+  return () =>
+    new Promise((resolve) => {
+      if (isReady) resolve()
+      /**
+       * @param {import('rollup').RollupWatcherEvent} e
+       */
+      function ready(e) {
+        if (e.code === 'END' || e.code === 'ERROR') {
+          w.off('event', ready)
+          resolve()
+        }
+      }
+      w.on('event', ready)
+    })
+}
+
 async function start() {
   // Build worker bundle and watch...
   const watcher = await buildWorkerDev()
@@ -123,12 +149,15 @@ async function start() {
 
   app.use(vite.middlewares)
 
+  const workerBundleWaiter = createCompilationWaiter(watcher)
   app.use(async (req, _, next) => {
     const entry = '/src/client.tsx'
     const fakeHtml = `<html><head></head><body><script type="module" src="${entry}"></script></body></html>`
     const html = await vite.transformIndexHtml(req.originalUrl, fakeHtml)
     assetsMap.head = parseHeadFromHTML(html)
     assetsMap.endOfBody = parseRunTimeScriptFromHTML(html)
+    // Wait worker bundle compilation to avoid mismatch between client and server
+    await workerBundleWaiter()
     next()
   })
 
