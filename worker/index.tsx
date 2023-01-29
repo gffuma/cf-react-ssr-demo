@@ -1,34 +1,33 @@
-import React from 'react'
 import { renderToReadableStream } from 'react-dom/server'
+import { Router } from 'itty-router'
 import App from '../src/App'
+import Skeleton from './Skeleton'
+import { createHTMLStreamTransformer } from './streamUtils'
 
-async function handle(event: any) {
-  console.log('~HANDLE~', __ASSETS__)
-  // console.log('O.o', process.env.NODE_ENV, hello())
-  const stream = await renderToReadableStream(
-    <html>
-      <head dangerouslySetInnerHTML={{ __html: __ASSETS__.head }}/>
-      <body>
-        <div id='root'>
-          <App />
-        </div>
-        <span dangerouslySetInnerHTML={{ __html: __ASSETS__.endOfBody }} />
-      </body>
-    </html>
-  )
+const router = Router()
 
-  return new Response(stream, {
+// TODO: Serve assets in prod...
+
+router.get('*', async (request: Request) => {
+  const transformer = createHTMLStreamTransformer([
+    {
+      afterHeadOpen: () => __ASSETS__.head,
+      beforeBodyClose: () => __ASSETS__.endOfBody,
+    },
+  ])
+  const reactStream = await renderToReadableStream(<Skeleton root={<App />} />)
+
+  await reactStream.allReady
+
+  const responseStream = reactStream.pipeThrough(transformer)
+
+  return new Response(responseStream, {
     headers: {
-      'content-type': 'text/html',
+      'content-type': 'text/html;charset=UTF-8',
     },
   })
-}
+})
 
-addEventListener('fetch', (event: any) => {
-  // const veryLongUnusedShit = 23
-  // console.log(event)
-
-  // console.log('O.o', process.env.NODE_ENV)
-  event.respondWith(handle(event))
-  // event.respondWith(new Response('Hello'))
+addEventListener('fetch', (event) => {
+  event.respondWith(router.handle(event.request, event))
 })

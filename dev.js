@@ -75,6 +75,9 @@ async function start() {
   })
 
   // Mutable assets map
+  /**
+   * @type {Record<string, string>}
+   */
   const assetsMap = {}
 
   // Start Miniflare!
@@ -83,7 +86,10 @@ async function start() {
     log: new Log(LogLevel.INFO),
     sourceMap: true,
     buildCommand: false,
-    compatibilityFlags: ['streams_enable_constructors'],
+    compatibilityFlags: [
+      'streams_enable_constructors',
+      'transformstream_enable_standard_constructor',
+    ],
     port: MINIFLARE_PORT,
     logUnhandledRejections: true,
     globals: {

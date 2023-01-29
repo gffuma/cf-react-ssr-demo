@@ -1,10 +1,9 @@
-import React from 'react'
 import Counter from './Counter'
 
 export default function App() {
   return (
     <div>
-      <h1>XD ahahahax</h1>
+      <h1>You Are Running React On The Edge</h1>
       <Counter />
     </div>
   )
