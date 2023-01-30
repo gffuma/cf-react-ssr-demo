@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "node dev.js",
     "build": "node build.js",
-    "preview": "wrangler dev dist/worker/index.js --local --compatibility-flags=streams_enable_constructors --compatibility-flag=transformstream_enable_standard_constructor"
+    "preview": "wrangler dev --local"
   },
   "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.3.0",
     "@vitejs/plugin-react": "^3.0.1",
     "express": "^4.18.2",
     "http-proxy-middleware": "^2.0.6",

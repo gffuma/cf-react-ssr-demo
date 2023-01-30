@@ -1,0 +1,11 @@
+name = "vite-ssr-demo-worker"
+main = "dist/worker/index.js"
+compatibility_date = "2023-01-30"
+compatibility_flags = [
+  "streams_enable_constructors",
+  "transformstream_enable_standard_constructor",
+]
+workers_dev = true
+
+[site]
+bucket = "./dist/client"
