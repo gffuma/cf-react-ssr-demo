@@ -3,11 +3,11 @@ import {
   MethodNotAllowedError,
   NotFoundError,
 } from '@cloudflare/kv-asset-handler'
-import { renderToReadableStream } from 'react-dom/server'
+import { renderToReadableStream, renderToString } from 'react-dom/server'
 import { Router } from 'itty-router'
 import App from '../src/App'
 import Skeleton from './Skeleton'
-import { createHTMLStreamTransformer } from './streamUtils'
+import { createHTMLStreamTransformer, stringToStream } from './streamUtils'
 
 const router = Router()
 
@@ -84,17 +84,36 @@ router.get('*', async (request: Request) => {
       beforeBodyClose: () => buildAssetsMap.endOfBody,
     },
   ])
-  const reactStream = await renderToReadableStream(<Skeleton root={<App />} />)
+  try {
+    const reactStream = await renderToReadableStream(
+      <Skeleton root={<App />} />
+    )
 
-  await reactStream.allReady
+    await reactStream.allReady
 
-  const responseStream = reactStream.pipeThrough(transformer)
+    const responseStream = reactStream.pipeThrough(transformer)
 
-  return new Response(responseStream, {
-    headers: {
-      'content-type': 'text/html;charset=UTF-8',
-    },
-  })
+    return new Response(responseStream, {
+      headers: {
+        'content-type': 'text/html;charset=UTF-8',
+      },
+    })
+  } catch (e) {
+    if (!import.meta.env.PROD) {
+      throw e
+    }
+    console.error(e)
+    // Switch 2 client render in production
+    const fallbackStream = stringToStream(
+      renderToString(<Skeleton root={null} />)
+    ).pipeThrough(transformer)
+
+    return new Response(fallbackStream, {
+      headers: {
+        'content-type': 'text/html;charset=UTF-8',
+      },
+    })
+  }
 })
 
 addEventListener('fetch', (event) => {
